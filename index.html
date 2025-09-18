@@ -32,21 +32,23 @@
     }
 
     * {
-  box-sizing: border-box;
-}
+      box-sizing: border-box;
+    }
 
-textarea {
-  width: 100%;
-  height: 200px;
-  font-family: monospace;
-  resize: vertical;
-  background: #0d1524;
-  color: #f0f0f0;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 8px;
-}
-
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      font-family: monospace;
+      resize: vertical;
+      background: #0d1524;
+      white-space: pre-wrap;
+      color: #f0f0f0;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px;
+      display: block;
+      overflow: hidden;
+    }
 
     .output {
       min-height: 200px;
@@ -68,59 +70,80 @@ textarea {
       border-radius: 4px;
       margin-bottom: 10px;
       cursor: help;
-      visibility: hidden;
     }
 
-    .warning::after {
-      content: attr(data-tooltip);
-      visibility: hidden;
-      width: max-content;
-      max-width: 250px;
+   
+
+    .tooltip {
+      opacity: 1;
+      position: absolute;
+      left: 110%;
+      top: 35%;
+      transform: translateY(-50%);
       background: #333;
       color: #fff;
-      text-align: left;
       border-radius: 5px;
       padding: 5px;
-      position: absolute;
-      z-index: 1;
-      left: 110%;
-      top: 50%;
-      transform: translateY(-50%);
+      min-width: 220px;
       white-space: normal;
+      z-index: 1;
     }
 
-    .warning:hover::after {
-      visibility: visible;
+    .tooltip div {
+      padding: 3px 0;
+      cursor: pointer;
+      margin-left: 0px;
+      padding-left: 10px;
     }
+
+    .tooltip div:hover {
+      color: #ff5050;
+    }
+
+    .tooltip:hover {
+        background: #2c2c2c;
+    }
+
+    /*.warning:hover {
+        background: #ff970e;
+    } */
 
     a {
       color: #4aa3ff;
       text-decoration: underline;
     }
+
   </style>
 </head>
 <body>
-  <h2>Unity Rich Text Previewer</h2>
+
+    <h2>Unity Rich Text Previewer</h2>
 
   <!-- Warning box -->
-  <div id="warning" class="warning" data-tooltip="">⚠</div>
+  <div id="warning" class="warning">
+    ⚠
+    <div id="tooltip" class="tooltip"></div>
+  </div>
 
   <div class="container">
     <div class="box">
       <h3>Input (Unity Rich Text)</h3>
-      <textarea id="inputText" placeholder='Example: <color=lime>Hello world!</color>'></textarea>
+      <textarea id="inputText" placeholder='Example: <color=lime>Hello world!</color>
+Supported Tags: "b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"'></textarea>
     </div>
     <div class="box">
       <h3>Output (Rendered)</h3>
       <div id="output" class="output"></div>
     </div>
   </div>
-  <h3>Supported Tags: "b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"</h3>
+  <!-- <h3>Supported Tags: "b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"</h3> -->
 
   <script>
     const input = document.getElementById("inputText");
     const output = document.getElementById("output");
     const warning = document.getElementById("warning");
+    const tooltip = document.getElementById("tooltip");
+
 
     function parseURT(text) {
       return text
@@ -135,86 +158,130 @@ textarea {
     }
 
     function checkErrors(text) {
-  let issues = [];
-  const supportedTags = ["b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"];
-  const tagRegex = /<\/?([a-z]+)(?:=[^>]*)?>/gi;
-  let stack = [];
-  let match;
+      let issues = [];
+      const supportedTags = ["b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"];
+      const tagRegex = /<\/?([a-z]+)(?:=[^>]*)?>/gi;
+      const lines = text.split("\n");
+      let stack = [];
+      let match;
 
-  // === Tag matching check ===
-  while ((match = tagRegex.exec(text)) !== null) {
-    const tag = match[1].toLowerCase();
-    const isClosing = match[0].startsWith("</");
+      lines.forEach((line, lineIndex) => {
+        while ((match = tagRegex.exec(line)) !== null) {
+          const tag = match[1].toLowerCase();
+          const isClosing = match[0].startsWith("</");
 
-    if (!supportedTags.includes(tag)) {
-      issues.push(`Unsupported tag <${tag}>.`);
-      continue;
-    }
+          if (!supportedTags.includes(tag)) {
+            issues.push({ msg: `Unsupported tag <${tag}>.`, line: lineIndex });
+            continue;
+          }
 
-    if (!isClosing) {
-      stack.push(tag);
-    } else {
-      if (stack.length === 0 || stack[stack.length - 1] !== tag) {
-        issues.push(`Unexpected closing tag </${tag}>.`);
-      } else {
-        stack.pop();
+          if (!isClosing) {
+            stack.push({ tag, line: lineIndex });
+          } else {
+            if (stack.length === 0 || stack[stack.length - 1].tag !== tag) {
+              issues.push({ msg: `Unexpected closing tag </${tag}>.`, line: lineIndex });
+            } else {
+              stack.pop();
+            }
+          }
+        }
+      });
+
+      if (stack.length > 0) {
+        stack.forEach(item => {
+          issues.push({ msg: `Unclosed tag <${item.tag}>.`, line: item.line });
+        });
       }
+
+      // Unsupported color check
+      const allowedColors = [
+        "red","green","blue","yellow","black","white","cyan","magenta",
+        "gray","grey","pink","fuchsia","aqua","brown","lightblue","lime",
+        "maroon","navy","olive","orange","silver","teal"
+      ];
+      const colorRegex = /<color=([^>]+)>/gi;
+      let colorMatch;
+      while ((colorMatch = colorRegex.exec(text)) !== null) {
+        const colorVal = colorMatch[1].toLowerCase();
+        const isHex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorVal);
+        if (!allowedColors.includes(colorVal) && !isHex) {
+          const lineIndex = text.substr(0, colorMatch.index).split("\n").length - 1;
+          issues.push({ msg: `Unsupported color value: "${colorVal}".`, line: lineIndex });
+        }
+      }
+
+      return issues;
     }
-  }
 
-  if (stack.length > 0) {
-    issues.push("Unclosed tag(s): " + stack.join(", "));
-  }
+    function highlightLine(lineIndex) {
+      const lines = input.value.split("\n");
+      let charIndex = 0;
+      for (let i = 0; i < lineIndex; i++) {
+        charIndex += lines[i].length + 1;
+      }
 
-  // === Unsupported color check ===
-  const allowedColors = [
-    "red","green","blue","yellow","black","white","cyan","magenta",
-    "gray","grey", "pink", "fuchsia", "aqua", "brown", "lightblue", "lime", "maroon", "navy", "olive", "orange", "silver", "teal"
-  ];
-  const colorRegex = /<color=([^>]+)>/gi;
-  let colorMatch;
-  while ((colorMatch = colorRegex.exec(text)) !== null) {
-    const colorVal = colorMatch[1].toLowerCase();
-    const isHex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colorVal);
-    if (!allowedColors.includes(colorVal) && !isHex) {
-      issues.push(`Unsupported color value: "${colorVal}".`);
+      input.focus();
+      input.setSelectionRange(charIndex, charIndex + lines[lineIndex].length);
+      //input.classList.add("line-highlight");
+      const style = document.createElement("style");
+      style.textContent = `
+        ::selection {
+            background: red;
+            color: black;
+        }
+    `;
+    document.head.appendChild(style);
+document.head.appendChild(style);
+
+      const removeHighlight = () => {
+        const style = document.createElement("style");
+      style.textContent = `
+        ::selection {
+            background: #4aa3ff;
+            color: white;
+        }
+    `;
+    document.head.appendChild(style);
+        input.removeEventListener("input", removeHighlight);
+        input.removeEventListener("click", removeHighlight);
+        input.removeEventListener("mousedown", removeHighlight);
+      };
+      input.addEventListener("input", removeHighlight);
+      input.addEventListener("click", removeHighlight);
+      input.addEventListener("mousedown", removeHighlight);
     }
-  }
-
-  // === Custom forbidden words check ===
-  const forbiddenList = [
-    // === "Unsupported text.",
-  ];
-  forbiddenList.forEach(item => {
-    if (text.includes(item)) {
-      issues.push(`Forbidden text found: "${item}".`);
-    }
-  });
-
-  return issues;
-}
-
 
     function updateOutput() {
       const text = input.value;
-
       output.innerHTML = parseURT(text);
 
       const errors = checkErrors(text);
+      tooltip.innerHTML = "";
+
       if (errors.length > 0) {
         warning.style.visibility = "visible";
-        warning.setAttribute("data-tooltip", errors.join("\n"));
+        errors.forEach((err, idx) => {
+          let item = document.createElement("div");
+          item.textContent = `Error ${idx+1}: ${err.msg} (line ${err.line+1})`;
+          item.onclick = () => highlightLine(err.line);
+          tooltip.appendChild(item);
+        });
       } else {
         warning.style.visibility = "hidden";
-        warning.setAttribute("data-tooltip", "");
       }
     }
 
-    // Update on typing
     input.addEventListener("input", updateOutput);
-
-    // Run once on page load
     updateOutput();
-  </script>
+
+    textarea = document.querySelector("textarea");
+        textarea.addEventListener('input', autoResize, false);
+
+        function autoResize() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        }
+
+        window.onload = () => autoResize.call(textarea);  </script>
 </body>
 </html>
