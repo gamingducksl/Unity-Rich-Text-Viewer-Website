@@ -1,0 +1,107 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #0a0f1a; /* dark blue-black background */
+    color: #f0f0f0;
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 20px;
+    align-items: start;
+  }
+
+  .box {
+    background: #1a2233; /* slightly lighter dark box */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  h2, h3 {
+    color: #ffffff;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    font-family: monospace;
+    resize: vertical;
+    background: #0d1524;
+    white-space: pre-wrap;
+    color: #f0f0f0;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 8px;
+    display: block;
+    overflow: hidden;
+  }
+
+  .output {
+    min-height: 200px;
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 6px;
+    background: #0d1524;
+    white-space: pre-wrap;
+    color: #f0f0f0;
+  }
+
+  .warning {
+    position: relative;
+    display: inline-block;
+    background: #ffc31d;
+    color: black;
+    font-weight: bold;
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    cursor: help;
+  }
+
+ 
+
+  .tooltip {
+    opacity: 1;
+    position: absolute;
+    left: 110%;
+    top: 35%;
+    transform: translateY(-50%);
+    background: #333;
+    color: #fff;
+    border-radius: 5px;
+    padding: 5px;
+    min-width: 220px;
+    white-space: normal;
+    z-index: 1;
+  }
+
+  .tooltip div {
+    padding: 3px 0;
+    cursor: pointer;
+    margin-left: 0px;
+    padding-left: 10px;
+  }
+
+  .tooltip div:hover {
+    color: #ff5050;
+  }
+
+  .tooltip:hover {
+      background: #2c2c2c;
+  }
+
+  /*.warning:hover {
+      background: #ff970e;
+  } */
+
+  a {
+    color: #4aa3ff;
+    text-decoration: underline;
+  }
