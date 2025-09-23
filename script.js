@@ -4,7 +4,7 @@ const input = document.getElementById("inputText");
     const tooltip = document.getElementById("tooltip");
     const fontSelect = document.getElementById("fontSelect");
 
-
+    // Convert URT input text to HTML output text
     function parseURT(text) {
       return text
         .replace(/<b>([\s\S]*?)<\/b>/gi, "<strong>$1</strong>")
@@ -17,6 +17,7 @@ const input = document.getElementById("inputText");
         .replace(/<link="(.+?)">([\s\S]*?)<\/link>/gi, "<a href='$1' target='_blank'>$2</a>");
     }
 
+    // Check for errors in the input text
     function checkErrors(text) {
       let issues = [];
       const supportedTags = ["b", "i", "u", "s", "color", "size", "align", "link", "sub", "sup"];
@@ -72,7 +73,8 @@ const input = document.getElementById("inputText");
 
       return issues;
     }
-
+    
+    // Error highlighter
     function highlightLine(lineIndex) {
       const lines = input.value.split("\n");
       let charIndex = 0;
@@ -183,5 +185,5 @@ document.head.appendChild(style);
     // Font selector listener
     fontSelect.addEventListener("change", () => {
       const font = fontSelect.value;
-      output.style.fontFamily = font; // ✅ only affects output
+      output.style.fontFamily = font; // only affects output
     });
