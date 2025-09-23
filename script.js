@@ -2,6 +2,7 @@ const input = document.getElementById("inputText");
     const output = document.getElementById("output");
     const warning = document.getElementById("warning");
     const tooltip = document.getElementById("tooltip");
+    const fontSelect = document.getElementById("fontSelect");
 
 
     function parseURT(text) {
@@ -142,3 +143,45 @@ document.head.appendChild(style);
         }
 
         window.onload = () => autoResize.call(textarea);
+    
+    // List of fonts: system + Google
+    const fontList = [
+      { name: "Monospace", css: "monospace" },
+      { name: "Arial (Default)", css: "Arial, sans-serif" },
+      { name: "Verdana", css: "Verdana, sans-serif" },
+      { name: "Georgia", css: "Georgia, serif" },
+      { name: "Courier New", css: "'Courier New', monospace" },
+  
+  // Google Fonts
+      { name: "Roboto", css: "'Roboto', sans-serif" },
+      { name: "Source Code Pro", css: "'Source Code Pro', monospace" },
+      { name: "Lato", css: "'Lato', sans-serif" },
+      { name: "Merriweather", css: "'Merriweather', serif" },
+      { name: "Fira Code", css: "'Fira Code', monospace" },
+      { name: "Orienta", css: "'Orienta', serif" }
+];
+
+  // Dynamically fill the dropdown
+  fontList.forEach((font, idx) => {
+    const option = document.createElement("option");
+    option.value = font.css;
+    option.textContent = font.name;
+    if (idx === 0) option.selected = true; // Default selection
+    fontSelect.appendChild(option);
+  });
+
+    // Sync dropdown to current output font
+    const currentFont = window.getComputedStyle(output).fontFamily; {
+    for (let option of fontSelect.options) {
+      if (option.value.replace(/['"]/g, "") === currentFont.replace(/['"]/g, "")) {
+        option.selected = true;
+        break;
+      }
+    }
+  };
+
+    // Font selector listener
+    fontSelect.addEventListener("change", () => {
+      const font = fontSelect.value;
+      output.style.fontFamily = font; // ✅ only affects output
+    });
